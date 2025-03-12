@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        @font-face {
+            font-family: 'Neue Montreal';
+            src: url('NeueMontreal-Medium.otf') format('opentype');
+            font-weight: 500;
+            font-style: normal;
+        }
+        html, body {
+            background-color: #100F0F;
+            margin: 0;
+            padding: 20px;
+            height: 100vh;
+            overflow: hidden;
+            cursor: none;
+        }
+        .cursor {
+            width: 20px;
+            height: 20px;
+            background: #F6EDEC;
+            border-radius: 50%;
+            position: fixed;
+            pointer-events: none;
+            z-index: 9999;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            transform: translate(-50%, -50%);
+        }
+        .cursor.active {
+            transform: translate(-50%, -50%) scale(0.7);
+        }
+        .cursor.expand {
+            width: 40px;
+            height: 40px;
+            background: #F6EDEC url('https://i.ibb.co/5XyxKpdR/image.png') center center no-repeat;
+            background-size: 60%;
+        }
+        .cursor.collapse {
+            width: 40px;
+            height: 40px;
+            background: #F6EDEC url('https://i.ibb.co/DPMvytLf/image.png') center center no-repeat;
+            background-size: 60%;
+        }
+        .cursor.shuffle {
+            width: 40px;
+            height: 40px;
+            background: #F6EDEC url('https://i.ibb.co/jvS7qmf5/image.png') center center no-repeat;
+            background-size: 60%;
+        }
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        .top-logo {
+            width: 125px;
+            height: auto;
+            position: absolute;
+            top: 20px;
+        }
+        .text-container {
+            font-family: 'Neue Montreal', sans-serif;
+            color: #F6EDEC;
+            font-size: 100px;
+            font-weight: 500;
+            letter-spacing: -0.075em;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            display: flex;
+            align-items: center;
+            gap: 35px;
+            cursor: none;
+        }
+        .time-unit {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            min-width: 200px;
+            justify-content: flex-end;
+            transition: all 0.3s ease;
+        }
+        .time-unit span {
+            min-width: 100px;
+            text-align: right;
+        }
+        .time-unit:last-child {
+            margin-left: -5px;
+        }
+        .time-unit .label {
+            color: #5D5959;
+            font-size: 100px;
+            letter-spacing: -0.075em;
+            display: none;
+        }
+        .icon {
+            height: 80px;
+            width: 80px;
+            object-fit: contain;
+            transition: opacity 0.3s ease;
+        }
+        .expanded .icon {
+            display: none;
+        }
+        .expanded .label {
+            display: block;
+        }
+        .seconds-unit {
+            display: none;
+            align-items: center;
+            gap: 12px;
+            min-width: 200px;
+            justify-content: flex-end;
+        }
+        .expanded .seconds-unit {
+            display: flex;
+        }
+        .seconds-unit span {
+            min-width: 100px;
+            text-align: right;
+        }
+        .seconds-unit .label {
+            color: #5D5959;
+            font-size: 100px;
+            letter-spacing: -0.075em;
+        }
+        .squares-container {
+            position: absolute;
+            bottom: 60px;
+            left: 52%;
+            transform: translateX(-50%);
+            width: 880px;
+            height: 200px;
+            cursor: none;
+        }
+        .square {
+            position: absolute;
+            top: 0;
+            width: 200px;
+            height: 200px;
+            background-color: black;
+            border-radius: 17.5px;
+            transition: all 0.5s ease;
+            overflow: hidden;
+        }
+        .square::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            box-shadow: inset 0 0 0 3px rgba(255, 255, 255, 0.1);
+            border-radius: 17.5px;
+            pointer-events: none;
+            z-index: 1;
+        }
+        .square img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .square:nth-child(1) { left: 110px; }
+        .square:nth-child(2) { left: 260px; }
+        .square:nth-child(3) { left: 410px; }
+        .square:nth-child(4) { left: 560px; }
+        
+        .squares-container:hover .square:nth-child(1) {
+            left: 0;
+            transform: rotate(0deg) !important;
+        }
+        .squares-container:hover .square:nth-child(2) {
+            left: 220px;
+            transform: rotate(0deg) !important;
+        }
+        .squares-container:hover .square:nth-child(3) {
+            left: 440px;
+            transform: rotate(0deg) !important;
+        }
+        .squares-container:hover .square:nth-child(4) {
+            left: 660px;
+            transform: rotate(0deg) !important;
+        }
+    </style>
+    <script>
+        const images = [
+            'https://i.ibb.co/Qy3dzwX/IMG-5491.jpg',
+            'https://i.ibb.co/sJVbXmjV/IMG-6728.jpg',
+            'https://i.ibb.co/zVHq32Kk/IMG-5366.jpg',
+            'https://i.ibb.co/5xthQDp4/IMG-9709.jpg',
+            'https://i.ibb.co/670MKjKH/2-AEEC0-E6-3-D30-475-B-8-A88-153-EA7-E9-F0-B8-2.jpg',
+            'https://i.ibb.co/Hp3yPYdD/IMG-5057.jpg',
+            'https://i.ibb.co/fdcDXzFd/IMG-5493.jpg',
+            'https://i.ibb.co/JwCVFLVc/D561-D00-A-5-CA2-4-CCD-964-C-CB1-B9-FC2-CE82.jpg',
+            'https://i.ibb.co/bj0L308L/IMG-6696.jpg'
+        ];
+
+        let previousImages = new Array(4).fill(null);
+
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        function getRandomRotation() {
+            return Math.random() * 12 - 6;
+        }
+
+        function initializeSquares() {
+            const squares = document.querySelectorAll('.square');
+            let shuffledImages = shuffleArray([...images]);
+            
+            squares.forEach((square, index) => {
+                square.style.transform = `rotate(${getRandomRotation()}deg)`;
+                
+                // Ensure no repeat images in the same position
+                let currentImage = previousImages[index];
+                while (shuffledImages.length > 0) {
+                    const newImage = shuffledImages.pop();
+                    if (newImage !== currentImage) {
+                        const img = document.createElement('img');
+                        img.src = newImage;
+                        img.alt = 'Random image';
+                        square.innerHTML = '';
+                        square.appendChild(img);
+                        previousImages[index] = newImage;
+                        break;
+                    }
+                    shuffledImages.unshift(newImage);
+                }
+            });
+        }
+
+        function updateTime() {
+            const startDate = new Date('2025-02-20T06:30:00').getTime();
+            const now = new Date().getTime();
+            let diff;
+            
+            if (now < startDate) {
+                diff = startDate - now;
+            } else {
+                diff = now - startDate;
+            }
+            
+            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+            
+            document.getElementById('dayCount').textContent = String(days).padStart(2, ' ');
+            document.getElementById('hourCount').textContent = String(hours).padStart(2, ' ');
+            document.getElementById('minuteCount').textContent = String(minutes).padStart(2, ' ');
+            document.getElementById('secondCount').textContent = String(seconds).padStart(2, ' ');
+            
+            requestAnimationFrame(updateTime);
+        }
+
+        window.onload = function() {
+            initializeSquares();
+            updateTime();
+
+            const cursor = document.createElement('div');
+            cursor.className = 'cursor';
+            document.body.appendChild(cursor);
+
+            let mouseX = 0;
+            let mouseY = 0;
+            let cursorX = 0;
+            let cursorY = 0;
+
+            const textContainer = document.querySelector('.text-container');
+            const squaresContainer = document.querySelector('.squares-container');
+            let isExpanded = false;
+
+            // Add click handlers to all spans inside time units
+            const timeUnits = document.querySelectorAll('.time-unit span, .seconds-unit span');
+            timeUnits.forEach(unit => {
+                unit.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    isExpanded = !isExpanded;
+                    textContainer.classList.toggle('expanded');
+                    cursor.classList.toggle('expand');
+                    cursor.classList.toggle('collapse');
+                });
+            });
+
+            textContainer.addEventListener('mouseenter', () => {
+                cursor.classList.add(isExpanded ? 'collapse' : 'expand');
+            });
+
+            textContainer.addEventListener('mouseleave', () => {
+                cursor.classList.remove('expand', 'collapse');
+            });
+
+            squaresContainer.addEventListener('mouseenter', () => {
+                cursor.classList.add('shuffle');
+            });
+
+            squaresContainer.addEventListener('mouseleave', () => {
+                cursor.classList.remove('shuffle');
+            });
+
+            squaresContainer.addEventListener('click', () => {
+                initializeSquares();
+            });
+
+            textContainer.addEventListener('click', () => {
+                isExpanded = !isExpanded;
+                textContainer.classList.toggle('expanded');
+                cursor.classList.toggle('expand');
+                cursor.classList.toggle('collapse');
+            });
+
+            document.addEventListener('mousemove', (e) => {
+                mouseX = e.clientX;
+                mouseY = e.clientY;
+            });
+
+            document.addEventListener('mousedown', () => {
+                cursor.classList.add('active');
+            });
+
+            document.addEventListener('mouseup', () => {
+                cursor.classList.remove('active');
+            });
+
+            function animate() {
+                cursorX += (mouseX - cursorX) * 0.2;
+                cursorY += (mouseY - cursorY) * 0.2;
+
+                cursor.style.left = cursorX + 'px';
+                cursor.style.top = cursorY + 'px';
+
+                requestAnimationFrame(animate);
+            }
+            animate();
+        };
+    </script>
+</head>
+<body>
+    <img class="top-logo" src="https://i.ibb.co/5WJd3yfB/Artboard-1-4x.png" alt="Artboard-1-4x">
+    <div class="text-container">
+        <div class="time-unit">
+            <span id="dayCount"></span>
+            <img class="icon" src="https://i.ibb.co/TMDQcstJ/image.png" alt="icon">
+            <span class="label">days</span>
+        </div>
+        <div class="time-unit">
+            <span id="hourCount"></span>
+            <img class="icon" src="https://i.ibb.co/JwQbSCNp/image.png" alt="icon">
+            <span class="label">hours</span>
+        </div>
+        <div class="time-unit">
+            <span id="minuteCount"></span>
+            <img class="icon" src="https://i.ibb.co/Txg9775M/image.png" alt="icon">
+            <span class="label">minutes</span>
+        </div>
+        <div class="seconds-unit">
+            <span id="secondCount"></span>
+            <span class="label">seconds</span>
+        </div>
+    </div>
+    <div class="squares-container">
+        <div class="square"></div>
+        <div class="square"></div>
+        <div class="square"></div>
+        <div class="square"></div>
+    </div>
+</body>
+</html>
